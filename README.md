@@ -10,3 +10,6 @@ Add this to a room to add coriolis forces, which act at a right angle to the pla
 player's movement direction, by default this rotation is clockwise but this can be changed by the mapper. The forces can also be restricted to a single axis if desired, disabled
 during a dash, or toggled on and off with a flag (untested). Compatibility with other mods has yet to be tested or worked on, so using this controller with other stuff affecting
 movement (particularly gravity and dashing) may result in unintended behavior at the moment.
+
+
+Big thanks to Snip and Rain (and several other in #code-modding) for helping me through the learning process here, and for providing me some example code to work off of
