@@ -1,0 +1,12 @@
+mods.FaerieHelper.name=Faerie Helper
+
+# Coriolis Controller
+
+entities.FaerieHelper/CoriolisController.placements.name.default=Coriolis Controller
+entities.FaerieHelper/CoriolisController.placements.description.default=Adds coriolis forces to the room, which act to rotate the player's speed vector. Default direction is clockwise.
+entities.FaerieHelper/CoriolisController.attributes.description.coriolisFlag=Flag to enable coriolis forces. If blank, will always be active.
+entities.FaerieHelper/CoriolisController.attributes.description.strength=Magnitude of force applied. Negative values will apply a counterclockwise-rotated force instead of a clockwise one.
+entities.FaerieHelper/CoriolisController.attributes.description.affectHorizontal=Whether the controller applies forces accelerating the player left or right.
+entities.FaerieHelper/CoriolisController.attributes.description.affectVertical=Whether the controller applies forces accelerating the player up or down. Functions like modified gravity when the net force is downwards.
+entities.FaerieHelper/CoriolisController.attributes.description.affectDash=Whether the controller applies acceleration even during a dash, resulting in curved dash trajectories.
+entities.FaerieHelper/CoriolisController.attributes.description.affectGroundedDash=Whether the controller should keep affecting dashes even when they are on the ground or a wall. Note that enabling this can cause coriolis forces to outright prevent supers/hypers/wallbounces in one direction. Does nothing unless Affect Dash is also enabled.
