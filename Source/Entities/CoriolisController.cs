@@ -133,8 +133,6 @@ public class CoriolisController : Entity
         
         if((player.OnGround() || (player.SuperWallJumpAngleCheck && (player.WallJumpCheck(-1) || player.WallJumpCheck(1)))) && !controller.affectGroundedDash)
             return original_direction;
-        
-        Logger.Log(nameof(FaerieHelperModule), "Firing dash vector rotation");
            
         float deflectionAngle = (float) Math.Atan(0.15f * controller.coriolisStrength);
 
