@@ -1,12 +1,8 @@
 using System;
-using System.Reflection;
-using System.Text.RegularExpressions;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.FaerieHelper.Entities;
 
@@ -21,16 +17,62 @@ public class CoriolisController : Entity
     internal bool affectGroundedDash;
     internal string activeFlag;
     internal bool usesFlag;
+    internal bool affectHoldables;
+    internal bool affectPlayer;
+    internal bool gravityLike;
+
+    internal float defaultStrength;
+    internal bool defaultHorizontal;
+    internal bool defaultVertical;
+    internal bool defaultDash;
+    internal bool defaultGroundedDash;
+    internal bool defaultHoldables;
+    internal bool defaultPlayer;
+    internal bool defaultGravityLike;
+    internal enum AffectDashMode : byte
+    {
+        Legacy = 0,
+        Never = 1,
+        OnlyInAir = 2,
+        Always = 6
+    }
     
     public CoriolisController(EntityData data, Vector2 offset) : base(data.Position + offset)
     {
         coriolisStrength = data.Float("strength", 5f);
         affectHorizontal = data.Bool("affectHorizontal", true);
-        affectVertical = data.Bool("affectVertical", false);
+        affectVertical = data.Bool("affectVertical", true);
         affectDash = data.Bool("affectDash", true);
         affectGroundedDash = data.Bool("affectGroundedDash", false) & affectDash;
         usesFlag = !string.IsNullOrWhiteSpace(data.Attr("coriolisFlag"));
         activeFlag = data.Attr("coriolisFlag");
+        affectPlayer = data.Bool("affectPlayer", true);
+        affectHoldables = data.Bool("affectHoldables", false);
+        gravityLike = data.Bool("gravityLike", false);
+        switch (data.Enum<AffectDashMode>("affectDashMode", AffectDashMode.Legacy))
+        {
+            case AffectDashMode.Legacy:
+                break;
+            case AffectDashMode.Never:
+                affectDash = false;
+                affectGroundedDash = false;
+                break;
+            case AffectDashMode.OnlyInAir:
+                affectDash = true;
+                affectGroundedDash = false;
+                break;
+            case AffectDashMode.Always:
+                affectDash = true;
+                affectGroundedDash = true;
+                break;
+        }
+        defaultStrength = coriolisStrength;
+        defaultHorizontal = affectHorizontal;
+        defaultVertical = affectVertical;
+        defaultDash = affectDash;
+        defaultGroundedDash = affectGroundedDash;
+        defaultHoldables = affectHoldables;
+        defaultPlayer = affectPlayer;
     }
 
     public override void Update()
@@ -39,9 +81,28 @@ public class CoriolisController : Entity
         
         if (Scene.Tracker.GetEntity<Player>() is not { } player || Scene.Tracker.GetEntity<CoriolisController>() is not CoriolisController controller)
             return;
-
+        
         if (usesFlag && !SceneAs<Level>().Session.GetFlag(activeFlag))
             return;
+        
+        if (controller.affectHoldables && !(Scene.Tracker.GetComponents<Holdable>() is not { } holdables))
+        {
+            foreach (Holdable holdable in holdables)
+            {
+                Vector2 holdableSpeed = holdable.GetSpeed();
+                float coriolisForce;
+                if (controller.affectVertical)
+                {
+                    coriolisForce = holdableSpeed.X * controller.coriolisStrength * Engine.DeltaTime;
+                    holdable.SetSpeed(new Vector2(holdableSpeed.X, holdableSpeed.Y + coriolisForce));
+                }
+                if (controller.affectHorizontal)
+                {
+                    coriolisForce = holdableSpeed.Y * controller.coriolisStrength * Engine.DeltaTime;
+                    holdable.SetSpeed(new Vector2(holdableSpeed.X - coriolisForce, holdableSpeed.Y));
+                }
+            }
+        }
         
         bool playerDashing = player.StateMachine.state == 2;
         if (!(player.StateMachine.state == 0 || player.StateMachine.state == 7) && !playerDashing)
@@ -55,30 +116,38 @@ public class CoriolisController : Entity
                 return;
         }
 
-        
-        Vector2 playerSpeed = player.Speed;
-        float coriolisForce;
-        if (controller.affectVertical)
+        if (controller.affectPlayer)
         {
-            coriolisForce = playerSpeed.X * controller.coriolisStrength;
-            if(coriolisForce < -900f)
+            Vector2 playerSpeed = player.Speed;
+            float coriolisForce;
+            if (controller.affectVertical)
             {
-                coriolisForce *= Engine.DeltaTime;
-                player.Speed.Y += coriolisForce;
-            } else if (playerDashing && controller.affectDash) {
-                if (!player.OnGround() || controller.affectGroundedDash)
+                coriolisForce = playerSpeed.X * controller.coriolisStrength;
+                if (coriolisForce < -900f * (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f))
                 {
                     coriolisForce *= Engine.DeltaTime;
+                    if (gravityLike)
+                    {
+                        coriolisForce *= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);
+                    }
                     player.Speed.Y += coriolisForce;
                 }
+                else if (playerDashing && controller.affectDash)
+                {
+                    if (!player.OnGround() || controller.affectGroundedDash)
+                    {
+                        coriolisForce *= Engine.DeltaTime;
+                        player.Speed.Y += coriolisForce;
+                    }
+                }
             }
-        }
 
-        if (controller.affectHorizontal && !(player.ClimbCheck(-1,0) && !playerDashing))
-        {
-            coriolisForce = playerSpeed.Y * controller.coriolisStrength;
-            coriolisForce *= Engine.DeltaTime;
-            player.Speed.X -= coriolisForce;
+            if (controller.affectHorizontal && !(player.ClimbCheck(Math.Sign(controller.coriolisStrength), 0) && !playerDashing))
+            {
+                coriolisForce = playerSpeed.Y * controller.coriolisStrength;
+                coriolisForce *= Engine.DeltaTime;
+                player.Speed.X -= coriolisForce;
+            }
         }
     }
     
@@ -98,10 +167,17 @@ public class CoriolisController : Entity
        if (player.Scene is not Level level || level.Tracker.GetEntity<CoriolisController>() is not CoriolisController controller)
            return original_gravity;
        
+       if (!controller.affectPlayer)
+           return original_gravity;
+       
        if (controller.usesFlag && !player.SceneAs<Level>().Session.GetFlag(controller.activeFlag))
            return original_gravity;
        
         float coriolisForce = player.Speed.X * controller.coriolisStrength;
+
+        if (!controller.gravityLike)
+            coriolisForce /= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);
+
         if (controller.affectVertical & coriolisForce > -900f)
             original_gravity += coriolisForce;
         

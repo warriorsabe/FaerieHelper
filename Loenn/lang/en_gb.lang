@@ -7,6 +7,31 @@ entities.FaerieHelper/CoriolisController.placements.description.default=Adds cor
 entities.FaerieHelper/CoriolisController.attributes.description.coriolisFlag=Flag to enable coriolis forces. If blank, will always be active.
 entities.FaerieHelper/CoriolisController.attributes.description.strength=Magnitude of force applied. Negative values will apply a counterclockwise-rotated force instead of a clockwise one.
 entities.FaerieHelper/CoriolisController.attributes.description.affectHorizontal=Whether the controller applies forces accelerating the player left or right.
-entities.FaerieHelper/CoriolisController.attributes.description.affectVertical=Whether the controller applies forces accelerating the player up or down. Functions like modified gravity when the net force is downwards.
-entities.FaerieHelper/CoriolisController.attributes.description.affectDash=Whether the controller applies acceleration even during a dash, resulting in curved dash trajectories.
-entities.FaerieHelper/CoriolisController.attributes.description.affectGroundedDash=Whether the controller should keep affecting dashes even when they are on the ground or a wall. Note that enabling this can cause coriolis forces to outright prevent supers/hypers/wallbounces in one direction. Does nothing unless Affect Dash is also enabled.
+entities.FaerieHelper/CoriolisController.attributes.description.affectVertical=Whether the controller applies forces accelerating the player up or down.
+entities.FaerieHelper/CoriolisController.attributes.description.gravityLike=Whether the vertical component of applied forces should be affected by the gravity extended variant.
+entities.FaerieHelper/CoriolisController.attributes.description.affectDashMode=How the controller should handle dashing players. Options:\nNever: Only affect players when not dashing, keeping dash trajectories linear.\nOnly In Air: Affect dashes, but not when they are on the ground or next to a wall, protecting supers/hypers/wallbounces.\nAlways: Affect all dashes, even if this would pull the player off the ground or adjacent wall.
+
+# Coriolis Strength Trigger
+
+triggers.FaerieHelper/CoriolisStrengthTrigger.placements.name.default=Coriolis Strength Trigger
+triggers.FaerieHelper/CoriolisStrengthTrigger.placements.description.default=Changes the strength of coriolis forces. Requires present Coriolis Controller to function.
+triggers.FaerieHelper/CoriolisStrengthTrigger.attributes.description.newStrength=New strength value to use.
+triggers.FaerieHelper/CoriolisStrengthTrigger.attributes.description.resetOnExit=Whether the strength should reset to its default value (as defined in the controller entity) after leaving the trigger.
+triggers.FaerieHelper/CoriolisController.attributes.description.flag=Flag to enable trigger. If blank, will always be active.
+
+# Coriolis Boolean Trigger
+
+triggers.FaerieHelper/CoriolisBooleanTrigger.placements.name.default=Coriolis Boolean Trigger
+triggers.FaerieHelper/CoriolisBooleanTrigger.placements.description.default=Changes a boolean value in the current room's Coriolis Controller when triggered.
+triggers.FaerieHelper/CoriolisBooleanTrigger.attributes.description.newValue=New value to use.
+triggers.FaerieHelper/CoriolisBooleanTrigger.attributes.description.targetValue=The specific controller boolean to affect.
+triggers.FaerieHelper/CoriolisBooleanTrigger.attributes.description.resetOnExit=Whether the strength should reset to its default value (as defined in the controller entity) after leaving the trigger.
+triggers.FaerieHelper/CoriolisBooleanTrigger.attributes.description.flag=Flag to enable trigger. If blank, will always be active.
+
+# Coriolis Dash Mode Trigger
+
+triggers.FaerieHelper/CoriolisDashModeTrigger.placements.name.default=Coriolis Dash Mode Trigger
+triggers.FaerieHelper/CoriolisDashModeTrigger.placements.description.default=Changes the affect dash mode for the current room's Coriolis Controller when triggered.
+triggers.FaerieHelper/CoriolisDashModeTrigger.attributes.description.newDashMode=The new way the controller should handle dashing players after the trigger is activated. Options:\nNever: Only affect players when not dashing, keeping dash trajectories linear.\nOnly In Air: Affect dashes, but not when they are on the ground or next to a wall, protecting supers/hypers/wallbounces.\nAlways: Affect all dashes, even if this would pull the player off the ground or adjacent wall.
+triggers.FaerieHelper/CoriolisDashModeTrigger.attributes.description.resetOnExit=Whether the strength should reset to its default value (as defined in the controller entity) after leaving the trigger.
+triggers.FaerieHelper/CoriolisDashModeTrigger.attributes.description.flag=Flag to enable trigger. If blank, will always be active.

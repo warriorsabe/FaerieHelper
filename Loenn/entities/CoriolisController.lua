@@ -15,14 +15,23 @@ CoriolisController.placements = {
     strength = 2.5,
     affectHorizontal = true,
     affectVertical = true,
-    affectDash = true,
-    affectGroundedDash = false
+    affectPlayer = true,
+    affectHoldables = true,
+    gravityLike = true,
+    affectDashMode = "OnlyInAir"
   }
 }
 
 CoriolisController.fieldInformation = {
     coriolisFlag = {
         fieldType = "string"   
+    },
+    affectDashMode = {
+        options = {
+            "Never",
+            "OnlyInAir",
+            "Always"
+        }
     }
 }
 
