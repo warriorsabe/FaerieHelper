@@ -13,7 +13,10 @@ during a dash, or toggled on and off with a flag. Also affects holdables.
 Trigger to change coriolis strength mid-room; can also be used to change direction by changing to or from a negative value. Can be enabled/disabled with a flag.
 
 ### Coriolis Dash Mode Trigger
-Trigger to change how the coriolis trigger interacts with dashes mid-room. Can be enabled/disabled with a flag.
+Trigger to change how the coriolis controller interacts with dashes mid-room. Can be enabled/disabled with a flag.
+
+### Coriolis Direction Mode Trigger
+Trigger to change which axes the coriolis controller applies forces to mid-room. Can be enabled/disabled with a flag.
 
 ### Coriolis Boolean Trigger
 Trigger to modify other boolean values in the coriolis controller mid-room. Can be enabled/disabled with a flag.
