@@ -14,7 +14,7 @@ public class CoriolisBooleanTrigger : Trigger
 
     internal enum TargetType
     {
-        AffectHorizontal, AffectVertical, AffectHoldables, AffectPlayer, GravityLike
+        AffectHorizontal, AffectVertical, AffectHoldables, AffectPlayer, AffectRedDash, AffectDreamDash, AffectFeather, AffectUndefined, GravityLike
     }
 
     internal TargetType target;
@@ -51,6 +51,18 @@ public class CoriolisBooleanTrigger : Trigger
             case TargetType.AffectPlayer:
                 controller.affectPlayer = newValue;
                 break;
+            case TargetType.AffectRedDash:
+                controller.affectRedDash = newValue;
+                break;
+            case TargetType.AffectDreamDash:
+                controller.affectDreamDash = newValue;
+                break;
+            case TargetType.AffectFeather:
+                controller.affectFeather = newValue;
+                break;
+            case TargetType.AffectUndefined:
+                controller.affectUndefined = newValue;
+                break;
             case TargetType.GravityLike:
                 controller.gravityLike = newValue;
                 break;
@@ -79,6 +91,18 @@ public class CoriolisBooleanTrigger : Trigger
                 break;
             case TargetType.AffectPlayer:
                 controller.affectPlayer = controller.defaultPlayer;
+                break;
+            case TargetType.AffectRedDash:
+                controller.affectRedDash = controller.defaultRedDash;
+                break;
+            case TargetType.AffectDreamDash:
+                controller.affectDreamDash = controller.defaultDreamDash;
+                break;
+            case TargetType.AffectFeather:
+                controller.affectFeather = controller.defaultFeather;
+                break;
+            case TargetType.AffectUndefined:
+                controller.affectUndefined = controller.defaultUndefined;
                 break;
             case TargetType.GravityLike:
                 controller.gravityLike = controller.defaultGravityLike;

@@ -13,11 +13,14 @@ CoriolisController.placements = {
   data = {
     coriolisFlag = "",  
     strength = 2.5,
-    affectHorizontal = true,
-    affectVertical = true,
+    affectDreamBlocks = true,
+    affectRedBoosters = true,
+    affectFeather = false,
     affectPlayer = true,
     affectHoldables = true,
+    affectUndefined = false,
     gravityLike = true,
+    affectDirectionMode = "Both",
     affectDashMode = "OnlyInAir"
   }
 }
@@ -31,6 +34,13 @@ CoriolisController.fieldInformation = {
             "Never",
             "OnlyInAir",
             "Always"
+        }
+    },
+    affectDirectionMode = {
+        options = {
+         "Horizontal",
+         "Vertical",
+         "Both"
         }
     }
 }

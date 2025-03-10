@@ -22,8 +22,10 @@ CoriolisBooleanTrigger.fieldInformation = {
          options = {
              "AffectHoldables",
              "AffectPlayer",
-             "AffectHorizontal",
-             "AffectVertical",
+             "AffectRedDash",
+             "AffectDreamDash",
+             "AffectFeather",
+             "AffectUndefined",
              "GravityLike"
          }
      }

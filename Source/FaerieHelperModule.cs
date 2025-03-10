@@ -36,6 +36,8 @@ public class FaerieHelperModule : EverestModule {
         typeof(ExtvarInterop).ModInterop();
         
         IL.Celeste.Player.NormalUpdate += CoriolisController.modPlayerNormalUpdate;
+
+        On.Celeste.DashBlock.OnDashed += MomentumPreservingDashBlock.On_OnDashed;
         
 
         MethodInfo Coroutine = typeof(Player).GetMethod("DashCoroutine", BindingFlags.NonPublic|BindingFlags.Instance).GetStateMachineTarget();
@@ -46,6 +48,8 @@ public class FaerieHelperModule : EverestModule {
 
     public override void Unload() {
         IL.Celeste.Player.NormalUpdate -= CoriolisController.modPlayerNormalUpdate;
+
+        On.Celeste.DashBlock.OnDashed -= MomentumPreservingDashBlock.On_OnDashed;
         
         LoadingCoroutineHook?.Dispose(); LoadingCoroutineHook = null;
     }
