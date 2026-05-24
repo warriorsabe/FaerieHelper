@@ -20,4 +20,6 @@ Trigger to modify other boolean values in the coriolis controller mid-room. Can 
 ## Momentum Dash Block
 Dash block that, when broken, cancels the player's dash and dash cooldown, preserving momentum. Will also add speed and maintain player momentum for several frames after being broken, akin to retained speed. By default does not cause the player to exit a red bubble, but will still modify speed. Can be set to multiply speed instead of adding it, and accepts negative values for the speed modification. Can be made to set a temporary flag when broken, which will be reset if the player dies or leaves the screen.
 
+#
+
 Big thanks to Snip and μ (and several other in #code_modding) for helping me through the learning process here, and for providing me some example code to work off of
