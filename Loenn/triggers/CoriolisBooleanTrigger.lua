@@ -1,34 +1,26 @@
 local CoriolisBooleanTrigger = {}
 
--- the name must match whatever is inside CustomEntity in c#
 CoriolisBooleanTrigger.name = "FaerieHelper/CoriolisBooleanTrigger"
 
 CoriolisBooleanTrigger.placements = {
-  -- the name of your placement - we can pick whatever
   name = "default",
 
-  -- the actual data of the placement: this is what goes inside EntityData in c#
   data = { 
     newValue = true,
     resetOnExit = true,
-    targetValue = "AffectHoldables"
+    targetValue = "AffectHoldables",
+    flag = ""
   }
 }
+
 CoriolisBooleanTrigger.fieldInformation = {
-    flag = {
-        fieldType = "string"   
-    },
      targetValue = {
          options = {
              "AffectHoldables",
              "AffectPlayer",
-             "AffectRedDash",
-             "AffectDreamDash",
-             "AffectFeather",
-             "AffectUndefined",
-             "GravityLike"
+             "GravityLike",
+             "DashTechProtection"
          }
      }
 }
--- we're ready - give the controller to lönn
 return CoriolisBooleanTrigger

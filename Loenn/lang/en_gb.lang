@@ -1,15 +1,20 @@
 mods.FaerieHelper.name=Faerie Helper
 
+# -/-/-/-/-/-------- CORIOLIS FORCES --------\-\-\-\-\-
+
 # Coriolis Controller
 
 entities.FaerieHelper/CoriolisController.placements.name.default=Coriolis Controller
-entities.FaerieHelper/CoriolisController.placements.description.default=Adds coriolis forces to the room, which act to rotate the player's speed vector. Default direction is clockwise.
+entities.FaerieHelper/CoriolisController.placements.description.default=Adds coriolis forces to the room, which act to rotate the player's speed vector. Default direction is counterclockwise.
 entities.FaerieHelper/CoriolisController.attributes.description.coriolisFlag=Flag to enable coriolis forces. If blank, will always be active.
-entities.FaerieHelper/CoriolisController.attributes.description.strength=Magnitude of force applied. Negative values will apply a counterclockwise-rotated force instead of a clockwise one.
-entities.FaerieHelper/CoriolisController.attributes.description.gravityLike=Whether the strength of the applied forces should be affected by the gravity extended variant.
-entities.FaerieHelper/CoriolisController.attributes.description.affectUndefined=Whether to apply forces to all states not defined above. Use with caution, as some states may not work correctly with coriolis forces applied.
-entities.FaerieHelper/CoriolisController.attributes.description.affectDashMode=How the controller should handle dashing players. Options:\nNever: Only affect players when not dashing, keeping dash trajectories linear.\nOnly In Air: Affect dashes, but not when they are on the ground or next to a wall, protecting supers/hypers/wallbounces.\nAlways: Affect all dashes, even if this would pull the player off the ground or adjacent wall.
-entities.FaerieHelper/CoriolisController.attributes.description.affectDirectionMode=Which directions the controller should apply forces in.
+entities.FaerieHelper/CoriolisController.attributes.description.strength=Magnitude of applied turning, in degrees per second. Negative values will apply a clockwise rotation to player velocity instead.\nNote that while the applied forces behave similarly to superdash or feather steering, they combine with gravity instead of\ndisabling it entirely, so at low speeds an upwards rotation will simply cause the player to fall slower.
+entities.FaerieHelper/CoriolisController.attributes.name.gravityLike=Gravity-Like
+entities.FaerieHelper/CoriolisController.attributes.description.gravityLike=Whether to invert rotation direction when gravity is inverted by GravityHelper.
+entities.FaerieHelper/CoriolisController.attributes.description.dashTechProtection=Prevent applying coriolis forces when a player is dashing or using a red bubble along a floor or wall, protecting supers/hypers/wallbounces.\nAlso prevents down or down-diagonal dashes that get steered upwards from resetting speed on exit.
+entities.FaerieHelper/CoriolisController.attributes.description.affectPlayer=Whether coriolis forces affect the player.
+entities.FaerieHelper/CoriolisController.attributes.description.affectHoldables=Whether coriolis forces affect dropped holdables, such as jellyfish or theo crystals.
+entities.FaerieHelper/CoriolisController.attributes.description.affectedStates=A comma-separated list of player states that the coriolis forces will be active in, as the integer statemachine values.\nSome common states include:\n\nstNormal: 0\nstDash: 2\nstSwim: 3\nstRedDash (Red Booster): 5\nstLaunch (Puffers/Bumpers): 7\nstDreamDash: 9\nstStarFly (Feather): 19
+entities.FaerieHelper/CoriolisController.attributes.description.blacklistMode=Whether to treat the list of affected states as a blacklist instead of a whitelist, affecting all states except those listed.\nUse with caution, as many states may behave unstably with coriolis forces. 
 
 # Coriolis Strength Trigger
 
@@ -28,18 +33,29 @@ triggers.FaerieHelper/CoriolisBooleanTrigger.attributes.description.targetValue=
 triggers.FaerieHelper/CoriolisBooleanTrigger.attributes.description.resetOnExit=Whether the strength should reset to its default value (as defined in the controller entity) after leaving the trigger.
 triggers.FaerieHelper/CoriolisBooleanTrigger.attributes.description.flag=Flag to enable trigger. If blank, will always be active.
 
-# Coriolis Dash Mode Trigger
+# Coriolis State Control Trigger
 
-triggers.FaerieHelper/CoriolisDashModeTrigger.placements.name.default=Coriolis Dash Mode Trigger
-triggers.FaerieHelper/CoriolisDashModeTrigger.placements.description.default=Changes the affect dash mode for the current room's Coriolis Controller when triggered.
-triggers.FaerieHelper/CoriolisDashModeTrigger.attributes.description.newDashMode=The new way the controller should handle dashing players after the trigger is activated. Options:\nNever: Only affect players when not dashing, keeping dash trajectories linear.\nOnly In Air: Affect dashes, but not when they are on the ground or next to a wall, protecting supers/hypers/wallbounces.\nAlways: Affect all dashes, even if this would pull the player off the ground or adjacent wall.
-triggers.FaerieHelper/CoriolisDashModeTrigger.attributes.description.resetOnExit=Whether the dash mode should reset to its default value (as defined in the controller entity) after leaving the trigger.
-triggers.FaerieHelper/CoriolisDashModeTrigger.attributes.description.flag=Flag to enable trigger. If blank, will always be active.
+triggers.FaerieHelper/CoriolisStateControlTrigger.placements.name.default=Coriolis State Control Trigger
+triggers.FaerieHelper/CoriolisStateControlTrigger.placements.description.default=Changes which states the current room's Coriolis Controller affects.
+triggers.FaerieHelper/CoriolisStateControlTrigger.attributes.description.newStates=New comma-separated list of states.\nSome common states include:\n\nstNormal: 0\nstDash: 2\nstSwim: 3\nstRedDash (Red Booster): 5\nstLaunch (Puffers/Bumpers): 7\nstDreamDash: 9\nstStarFly (Feather): 19
+triggers.FaerieHelper/CoriolisStateControlTrigger.attributes.description.blacklistMode=Whether to treat the list of affected states as a blacklist instead of a whitelist, affecting all states except those listed.\nUse with caution, as many states may behave unstably with coriolis forces.
+triggers.FaerieHelper/CoriolisStateControlTrigger.attributes.description.resetOnExit=Whether the strength should reset to its default value (as defined in the controller entity) after leaving the trigger.
+triggers.FaerieHelper/CoriolisStateControlTrigger.attributes.description.flag=Flag to enable trigger. If blank, will always be active.
 
-# Coriolis Direction Mode Trigger
 
-triggers.FaerieHelper/CoriolisDirectionModeTrigger.placements.name.default=Coriolis Direction Mode Trigger
-triggers.FaerieHelper/CoriolisDirectionModeTrigger.placements.description.default=Changes the affect direction mode for the current room's Coriolis Controller when triggered.
-triggers.FaerieHelper/CoriolisDirectionModeTrigger.attributes.description.newDirectionMode=Which directions the controller should now apply forces in.
-triggers.FaerieHelper/CoriolisDirectionModeTrigger.attributes.description.resetOnExit=Whether the direction mode should reset to its default value (as defined in the controller entity) after leaving the trigger.
-triggers.FaerieHelper/CoriolisDirectionModeTrigger.attributes.description.flag=Flag to enable trigger. If blank, will always be active.
+# -/-/-/-/-/-------- MOMENTUM DASH BLOCK --------\-\-\-\-\-
+
+# Momentum Dash Block
+
+entities.FaerieHelper/MomentumPreservingDashBlock.placements.name.default=Momentum Dash Block
+entities.FaerieHelper/MomentumPreservingDashBlock.placements.description.default=Dash block that cancels dash and dash cooldown while maintaining player momentum after being broken. Duration of held momentum and magnitude of boost can be customized.
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.duration=How long player momentum is maintained for after the block is broken. Zero duration will still cancel dash and prevent velocity reset.
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.addedSpeed=How much additional speed is added to the player when the block is broken. Can be made negative to slow player (resulting momentum will still be maintained).
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.resetCooldown=Whether breaking the block resets dash cooldown, ensuring the player can always dash again immediately after collision.
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.name.multiplicative=Multiplicative Mode
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.multiplicative=Changes the behavior of Added Speed to instead act as a multiplier to the current speed, instead of adding or subtracting a flat value. Negative values will reverse momentum.
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.breakRedBubbles=Whether the block should reset the player to stNormal when it is broken with a red booster collision. Momentum will be added in either case.
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.onBreakFlag=Sets a temporary flag when broken. Flag will be reset upon dying or screen transitioning.
+
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.blendin=Blends the block with the walls it touches, making it less apparent.
+entities.FaerieHelper/MomentumPreservingDashBlock.attributes.description.tiletype=Determines the visual appearance of the block.

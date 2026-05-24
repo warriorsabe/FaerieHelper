@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -10,215 +11,262 @@ namespace Celeste.Mod.FaerieHelper.Entities;
 [CustomEntity("FaerieHelper/CoriolisController")]
 public class CoriolisController : Entity
 {
-    internal float coriolisStrength;
-    internal bool affectHorizontal;
-    internal bool affectVertical;
-    internal bool affectDash;
-    internal bool affectGroundedDash;
+    // Variables set by options in the entity's lonn plugin
+    
+    internal float coriolisStrength;    // Units of radians per second
     internal string activeFlag;
     internal bool usesFlag;
+    internal bool gravityLike;
+    internal bool dashTechProtection;
     internal bool affectHoldables;
     internal bool affectPlayer;
-    internal bool gravityLike;
-    internal bool affectFeather;
-    internal bool affectRedDash;
-    internal bool affectDreamDash;
-    internal bool affectUndefined;
+    internal bool blacklistMode;
+    internal int[] affectedStates;
+    //  Helper bools for state-specific logic later
+    internal bool affectDash;  
+    internal bool affectNormal;
 
+    // Copies of the above variables initialized to the same value, stored so triggers that reset on exit can properly reset the controller
+    
     internal float defaultStrength;
-    internal bool defaultHorizontal;
-    internal bool defaultVertical;
-    internal bool defaultDash;
-    internal bool defaultGroundedDash;
+    internal bool defaultFlag;
+    internal bool defaultDashTechProtection;
     internal bool defaultHoldables;
     internal bool defaultPlayer;
     internal bool defaultGravityLike;
-    internal bool defaultFeather;
-    internal bool defaultRedDash;
-    internal bool defaultDreamDash;
-    internal bool defaultUndefined;
-    internal enum AffectDashMode : byte
-    {
-        Legacy = 0,
-        Never = 1,
-        OnlyInAir = 2,
-        Always = 6
-    }
-    internal enum DirectionMode : byte
-    {
-        Legacy = 0,
-        Horizontal = 1,
-        Vertical = 2,
-        Both = 6
-    }
+    internal bool defaultBlacklist;
+    internal int[] defaultStates;
+    internal bool defaultDash;
+    internal bool defaultNormal;
+
+    // Just so Space Station Detour doesn't get broken by the improved physics
+    internal bool legacyBehavior;
     
     public CoriolisController(EntityData data, Vector2 offset) : base(data.Position + offset)
     {
+        // Legacy values, not editable on newly placed entities
+        
+        legacyBehavior = true;
+        legacyBehavior = data.Bool("legacyBehavior", true);
+        
+        dashTechProtection = !data.Bool("affectGroundedDash", false);
+        affectDash = data.Bool("affectDash", false);
+        
+        // Customizable values
+        
         coriolisStrength = data.Float("strength", 5f);
-        affectHorizontal = data.Bool("affectHorizontal", true);
-        affectVertical = data.Bool("affectVertical", true);
-        affectDash = data.Bool("affectDash", true);
-        affectGroundedDash = data.Bool("affectGroundedDash", false) & affectDash;
-        usesFlag = !string.IsNullOrWhiteSpace(data.Attr("coriolisFlag"));
         activeFlag = data.Attr("coriolisFlag");
+        usesFlag = !string.IsNullOrWhiteSpace(activeFlag);   // Not directly customizable, but auto-detects whether a flag is set
+        if(!usesFlag)
+            activeFlag = "";    // Standardize base case for consistent exports
         affectPlayer = data.Bool("affectPlayer", true);
         affectHoldables = data.Bool("affectHoldables", false);
         gravityLike = data.Bool("gravityLike", false);
-        affectFeather = data.Bool("affectFeather", false);
-        affectRedDash = data.Bool("affectRedBoosters", true);
-        affectDreamDash = data.Bool("affectDreamBlocks", true);
-        affectUndefined = data.Bool("affectUndefined", false);
-        switch (data.Enum<AffectDashMode>("affectDashMode", AffectDashMode.Legacy))
+        if (!legacyBehavior)
+            affectedStates = data.Attr("affectedStates").Split(',').Select(int.Parse).ToArray();
+        dashTechProtection = data.Bool("dashTechProtection", true);
+        blacklistMode = data.Bool("blacklistMode", false);
+
+        if (legacyBehavior)
         {
-            case AffectDashMode.Legacy:
-                break;
-            case AffectDashMode.Never:
-                affectDash = false;
-                affectGroundedDash = false;
-                break;
-            case AffectDashMode.OnlyInAir:
-                affectDash = true;
-                affectGroundedDash = false;
-                break;
-            case AffectDashMode.Always:
-                affectDash = true;
-                affectGroundedDash = true;
-                break;
+            if (affectDash)
+                affectedStates = [0, 2];
+            else
+                affectedStates = [0];
         }
-        switch (data.Enum<DirectionMode>("directionMode", DirectionMode.Legacy))
+
+
+        // Set helper bools based on list of affected states
+        affectNormal = false;
+        affectDash = false;
+        foreach (int state in affectedStates)
         {
-            case DirectionMode.Legacy:
-                break;
-            case DirectionMode.Horizontal:
-                affectHorizontal = true;
-                affectVertical = false;
-                break;
-            case DirectionMode.Vertical:
-                affectHorizontal = false;
-                affectVertical = true;
-                break;
-            case DirectionMode.Both:
-                affectHorizontal = true;
-                affectVertical = true;
-                break;
+            if (state == 0)
+                affectNormal = true;
+            if(state == 2)
+                affectDash = true;
         }
+        
+        // Change units from degrees per second counterclockwise to radians per second clockwise
+
+        if (!legacyBehavior)
+            coriolisStrength *= (float) Math.PI / -180f;
+        
+        // Copy values to defaults for use by triggers
+        
         defaultStrength = coriolisStrength;
-        defaultHorizontal = affectHorizontal;
-        defaultVertical = affectVertical;
-        defaultDash = affectDash;
-        defaultGroundedDash = affectGroundedDash;
+        defaultFlag = usesFlag;
+        defaultDashTechProtection = dashTechProtection;
         defaultHoldables = affectHoldables;
         defaultPlayer = affectPlayer;
-        defaultFeather = affectFeather;
-        defaultRedDash = affectRedDash;
-        defaultDreamDash = affectDreamDash;
+        defaultStates = affectedStates;
+        defaultBlacklist = blacklistMode;
+        defaultNormal = affectNormal;
+        defaultDash = affectDash;
     }
 
+    // Main Coriolis logic
+    
     public override void Update()
     {
         base.Update();
         
         if (Scene.Tracker.GetEntity<Player>() is not { } player || Scene.Tracker.GetEntity<CoriolisController>() is not CoriolisController controller)
-            return;
+            return;    // No coriolis forces if no coriolis controller
         
-        if (usesFlag && !SceneAs<Level>().Session.GetFlag(activeFlag))
-            return;
+        if (controller.usesFlag && !SceneAs<Level>().Session.GetFlag(controller.activeFlag))
+            return;     // No coriolis forces if the controller is set to use a flag which is disabled
+
+
+        // Coriolis forces attempt to rotate the current velocity vector at a specific angular velocity
+        float rotationAngle = controller.coriolisStrength * Engine.DeltaTime;
         
-        if (controller.affectHoldables && !(Scene.Tracker.GetComponents<Holdable>() is not { } holdables))
+        // Coriolis effect on dropped holdables
+        
+        if (controller.affectHoldables && Scene.Tracker.GetComponents<Holdable>() is { } holdables)
         {
             foreach (Holdable holdable in holdables)
             {
                 Vector2 holdableSpeed = holdable.GetSpeed();
-                float coriolisForce;
-                if (controller.affectVertical)
-                {
-                    coriolisForce = holdableSpeed.X * controller.coriolisStrength * Engine.DeltaTime;
-                    
-                    if (controller.gravityLike)
-                        coriolisForce *= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);
-                    
-                    holdable.SetSpeed(new Vector2(holdableSpeed.X, holdableSpeed.Y + coriolisForce));
-                }
-                if (controller.affectHorizontal)
-                {
-                    coriolisForce = holdableSpeed.Y * controller.coriolisStrength * Engine.DeltaTime;
-                    
-                    if (controller.gravityLike)
-                        coriolisForce *= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);
-                    
-                    holdable.SetSpeed(new Vector2(holdableSpeed.X - coriolisForce, holdableSpeed.Y));
-                }
+                
+                // Inverts rotation direction when gravityhelper inverts gravity, if gravitylike is true
+                if (controller.gravityLike && (GravityHelperInterop.IsActorInverted?.Invoke(holdable.EntityAs<Actor>()) ?? false))
+                    rotationAngle *= -1f;
+                
+                Vector2 rotatedHoldableSpeed = holdableSpeed.Rotate(rotationAngle);
+                
+                holdable.SetSpeed(rotatedHoldableSpeed);
+                
+                if (controller.gravityLike && (GravityHelperInterop.IsActorInverted?.Invoke(holdable.EntityAs<Actor>()) ?? false))
+                    rotationAngle *= -1f;   // Put rotation angle back to normal so inversions don't persist to subsequent uses of the variable
             }
         }
-
-        bool affectedByGravity = false;
         
-        switch (player.StateMachine.state)
-        {
-            case 0:
-                affectedByGravity = true;
-                break;
-            case 1:
-                return;
-            case 2:
-                if(!controller.affectDash || ((player.OnGround() || (player.SuperWallJumpAngleCheck && (player.WallJumpCheck(-1) || player.WallJumpCheck(1)))) && !controller.affectGroundedDash))
-                    return;
-                break;
-            case 5:
-                if(!controller.affectRedDash || ((player.OnGround() || (player.SuperWallJumpAngleCheck && (player.WallJumpCheck(-1) || player.WallJumpCheck(1)))) && !controller.affectGroundedDash))
-                    return;
-                break;
-            case 9:
-                if(!controller.affectDreamDash)
-                    return;
-                break;
-            case 19:
-                if (!controller.affectFeather)
-                    return;
-                break;
-            default:
-                if(!controller.affectUndefined)
-                    return;
-                break;
-        }
+        // Coriolis forces on player
         
         if (controller.affectPlayer)
-        {
-            Vector2 playerSpeed = player.Speed;
-            float coriolisForce;
-            if (controller.affectVertical)
+        { 
+            Vector2 playerSpeed = player.Speed; // Stored locally in order to safely perform temporary modifications and avoid needing to retrieve it several times
+
+            if (playerSpeed == Vector2.Zero)
+                return;     // No coriolis forces happen at zero speed, so skip unnecessary logic and prevent possible issues from trying to operate on zero vectors
+            
+            // Player state control logic
+        
+            bool affectedByGravity = false;
+            
+            if (controller.legacyBehavior)
             {
-                
-                coriolisForce = playerSpeed.X * controller.coriolisStrength;
-                
-                if (controller.gravityLike)
-                    coriolisForce *= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);
-                
-                if (coriolisForce < -900f * (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f))
+                switch (player.StateMachine.state)
                 {
-                    coriolisForce *= Engine.DeltaTime;
-                    player.Speed.Y += coriolisForce;
-                }
-                else if (!affectedByGravity)
-                {
-                    coriolisForce *= Engine.DeltaTime;
-                    player.Speed.Y += coriolisForce;
+                    case 0:
+                        affectedByGravity = true;
+                        break;
+                    case 1:
+                        return;
+                    case 2:
+                        if ((player.OnGround() || (player.SuperWallJumpAngleCheck && (player.WallJumpCheck(-1) || player.WallJumpCheck(1)))) && controller.dashTechProtection)
+                            return; // Don't pull the player away from surfaces they could super, hyper, or wallbounce off of unless affect dash mode is "Always"
+                        break;
+                    default:
+                        return;
                 }
             }
-
-            if (controller.affectHorizontal && !(player.ClimbCheck(Math.Sign(controller.coriolisStrength), 0) && affectedByGravity))
+            else
             {
-                coriolisForce = playerSpeed.Y * controller.coriolisStrength;
+                bool active = controller.blacklistMode;
+                foreach (int state in controller.affectedStates)
+                {
+                    if (state == player.StateMachine.state)
+                    {
+                        active = !active;
+                        break;
+                    }
+                }
+                if (!active)
+                    return;
+            }
+
+            bool inverted = GravityHelperInterop.IsPlayerInverted?.Invoke() ?? false;
+            
+            // Same tech protection check as above, but also checks for red bubble state in addition to dash state. Ignores disabled tech protection if it would rotate a grounded dash into the ground to avoid stacking an ultraboost every frame
+            bool willCollideIfDash = player.OnGround() && (!inverted && Math.Sign(player.Speed.X) == Math.Sign(controller.coriolisStrength) || (inverted && Math.Sign(player.Speed.X) == -1 * Math.Sign(controller.coriolisStrength)));
+            if (player.StateMachine.state is 2 or 5 && (player.OnGround() || (player.SuperWallJumpAngleCheck && (player.WallJumpCheck(-1) || player.WallJumpCheck(1)))) && (controller.dashTechProtection || willCollideIfDash))
+                return;
+            
+            if(player.StateMachine.state == 0)
+                affectedByGravity = true;
+
+            
+            // Determined that the player is in a state the coriolis controller is set to affect
+            // Actual physics logic follows
+            
+            if(inverted)
+                playerSpeed.Y *= -1f;
+            
+            if (controller.gravityLike && inverted)
+                rotationAngle *= -1f;    // Similar to inversion of holdable rotation
+            
+            Vector2 rotatedSpeed = playerSpeed.Rotate(rotationAngle);
+            
+            if (!controller.legacyBehavior && rotatedSpeed.Y > player.maxFall)
+                player.maxFall = rotatedSpeed.Y;
+            
+            float coriolisForce;     // Stored as a velocity offset rather than directly applying rotated velocity so that forces can be compared to gravity, and to more easily support legacy behavior
+            
+            // Vertical Speed Adjustment
+            
+            if (controller.legacyBehavior)
+                coriolisForce = playerSpeed.X * controller.coriolisStrength * Engine.DeltaTime;
+            else
+                coriolisForce = rotatedSpeed.Y - playerSpeed.Y;
+            
+            if (!affectedByGravity || coriolisForce < -900f * Engine.DeltaTime * (float)(ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f))
+            {
+                if(inverted)
+                    coriolisForce *= -1f;
                 
-                if (controller.gravityLike)
-                    coriolisForce *= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);
+                player.Speed.Y += coriolisForce;    // Only directly apply coriolis forces vertically if they would overcome gravity, otherwise allow gravity adjustment to take over role
+            }
+
+            // Horizontal Speed Adjustment
+
+            if (controller.legacyBehavior)
+            {
+                if (!(player.ClimbCheck(Math.Sign(controller.coriolisStrength), 0) && affectedByGravity)) // Prevents you from getting pulled away from walls you try to climb
+                {
+                    coriolisForce = playerSpeed.Y * controller.coriolisStrength * Engine.DeltaTime;
+
+                    player.Speed.X -= coriolisForce;
+                }
+            }
+            else
+            {
+                if (player.wallSlideDir == 0) // Smarter version of legacy check
+                {
+                    coriolisForce = rotatedSpeed.X - playerSpeed.X;
+
+                    if (player.wallSpeedRetentionTimer == 0 || controller.legacyBehavior)
+                        player.Speed.X += coriolisForce;
+                }
+
+                // Normalize dash direction, ensuring dream block entry and performed techs match the direction madeline is moving
                 
-                coriolisForce *= Engine.DeltaTime;
-                player.Speed.X -= coriolisForce;
+                if (controller.affectDash && player.StateMachine.state is 2 or 5 or 9)
+                {
+                    Vector2 newDashDir = player.Speed.SafeNormalize();
+                    
+                    if(controller.dashTechProtection && player.DashDir.Y > 0 && newDashDir.Y <= 0)
+                        newDashDir.Y = player.DashDir.Y;    // Stops downright dashes which get bent upwards from killing speed like an upwards dash if dash tech protection is enabled
+                        
+                    if(player.wallSpeedRetentionTimer == 0) // Ensures that dashing straight into a wall doesn't allow you to wallbounce
+                        player.DashDir = newDashDir.SafeNormalize();
+                }
             }
         }
     }
     
+    // ILHook for Gravity-based vertical speed adjustment (applies when coriolis force acts downwards or is weaker than gravity, and the player is under the influence of gravity)
     internal static void modPlayerNormalUpdate(ILContext il) {
         
         ILCursor cursor = new(il);
@@ -230,28 +278,46 @@ public class CoriolisController : Entity
         cursor.EmitDelegate(changeGravity);
     }
 
-    private static float changeGravity(float original_gravity, Player player) {
+    // Gravity-based vertical speed adjustment logic
+    private static float changeGravity(float originalGravity, Player player) {
 
        if (player.Scene is not Level level || level.Tracker.GetEntity<CoriolisController>() is not CoriolisController controller)
-           return original_gravity;
+           return originalGravity;
        
-       if (!controller.affectPlayer)
-           return original_gravity;
+       if (!controller.affectPlayer || !controller.affectNormal || player.Speed == Vector2.Zero)
+           return originalGravity;
        
        if (controller.usesFlag && !player.SceneAs<Level>().Session.GetFlag(controller.activeFlag))
-           return original_gravity;
+           return originalGravity;
        
-        float coriolisForce = player.Speed.X * controller.coriolisStrength;
-
-        if (!controller.gravityLike)
-            coriolisForce /= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);   //Extvar will multiply these forces itself, so we undo that when we don't want it instead
-
-        if (controller.affectVertical & coriolisForce > -900f)
-            original_gravity += coriolisForce;
+       // Recalculate vertical component of coriolis force
+       
+        float coriolisForce; 
         
-        return original_gravity;
+        if(controller.legacyBehavior)
+            coriolisForce = player.Speed.X * controller.coriolisStrength;
+        else
+        {
+            float rotationAngle = controller.coriolisStrength * Engine.DeltaTime;
+            if (GravityHelperInterop.IsPlayerInverted?.Invoke() ?? false)
+                coriolisForce = -1f * ((-1f * player.Speed).Rotate(-1f * rotationAngle).Y + player.Speed.Y);    // Gravity helper summons negations georg
+            else
+                coriolisForce = player.Speed.Rotate(rotationAngle).Y - player.Speed.Y;
+            
+            coriolisForce /= Engine.DeltaTime;
+            // Multiplication by deltatime will happen after this modified gravity value is returned to the stack, but deltatime cannot be removed from the calculation here,
+            // so it is divided out after the coriolis offset is calculated to undo the extraneous later multiplication
+        }
+
+        coriolisForce /= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);   //Extvar will multiply these forces itself, so we undo that too
+        
+        if (coriolisForce > -900f)  // While it looks different due to the modifications to the coriolisForce value, this is the exact opposite of check on the normal vertical coriolis logic, ensuring this happens when that doesn't 
+            originalGravity += coriolisForce;
+        
+        return originalGravity;
     }
     
+    // ILHook for dash exit direction fix
     public static void ModifiedCoroutineHook(ILContext il) 
     {
         ILCursor cursor = new ILCursor(il);
@@ -260,32 +326,21 @@ public class CoriolisController : Entity
         {
             cursor.Index--;
             cursor.EmitLdloc1();
-            cursor.EmitDelegate(rotateVector);
+            cursor.EmitDelegate(CorrectedDashExit);
         }
     }
     
-    private static Vector2 rotateVector(Vector2 original_direction, Player player) {
+    // Logic for dash exit direction fix
+    // Forces dash exit momentum to be in the same direction as the actual movement when a coriolis controller is modifying dashes,
+    // thus avoiding the unnatural abrupt changes in direction that would otherwise happen if the dash gets strongly curved by coriolis
+    private static Vector2 CorrectedDashExit(Vector2 originalDirection, Player player) {
 
         if (player.Scene is not Level level || level.Tracker.GetEntity<CoriolisController>() is not CoriolisController controller)
-            return original_direction;
+            return originalDirection;
         
-        if (!controller.affectPlayer || controller.usesFlag && !player.SceneAs<Level>().Session.GetFlag(controller.activeFlag))
-            return original_direction;
-        
-        if(!controller.affectDash)
-            return original_direction;
-        
-        if((player.OnGround() || (player.SuperWallJumpAngleCheck && (player.WallJumpCheck(-1) || player.WallJumpCheck(1)))) && !controller.affectGroundedDash)
-            return original_direction;
+        if (!controller.affectPlayer || !controller.affectDash || (controller.usesFlag && !player.SceneAs<Level>().Session.GetFlag(controller.activeFlag)))
+            return originalDirection;
 
-        float coriolisStrength = controller.coriolisStrength;
-        
-        if (controller.gravityLike)
-            coriolisStrength *= (float) (ExtvarInterop.GetCurrentVariantValue?.Invoke("Gravity") ?? 1f);
-        
-        float deflectionAngle = (float) Math.Atan(0.15f * coriolisStrength);
-
-       return original_direction.Rotate(deflectionAngle);
+        return player.Speed.SafeNormalize();
     }
-    
 }

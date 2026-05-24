@@ -1,33 +1,36 @@
 local CoriolisController = {}
 
--- the name must match whatever is inside CustomEntity in c#
 CoriolisController.name = "FaerieHelper/CoriolisController"
-CoriolisController.depth = -100
+CoriolisController.depth = -100000
 CoriolisController.texture = "controllers/FaerieHelper/CoriolisController"
 
 CoriolisController.placements = {
-  -- the name of your placement - we can pick whatever
-  name = "default",
-
-  -- the actual data of the placement: this is what goes inside EntityData in c#
-  data = {
-    coriolisFlag = "",  
-    strength = 2.5,
-    affectDreamBlocks = true,
-    affectRedBoosters = true,
-    affectFeather = false,
-    affectPlayer = true,
-    affectHoldables = true,
-    affectUndefined = false,
-    gravityLike = true,
-    affectDirectionMode = "Both",
-    affectDashMode = "OnlyInAir"
-  }
+    name = "default",
+    
+    data = {
+        coriolisFlag = "",  
+        strength = 140,
+        blacklistMode = false,
+        affectPlayer = true,
+        affectHoldables = true,
+        gravityLike = true,
+        dashTechProtection = true,
+        
+        legacyBehavior = false,
+        
+        affectedStates = "0,2,3,5,9"
+    }
 }
 
 CoriolisController.fieldInformation = {
-    coriolisFlag = {
-        fieldType = "string"   
+    affectedStates = {
+       fieldType = "list",
+       elementOptions = {
+           fieldType = "integer",
+           editable = true
+       }, 
+       elementDefault = -1,
+       elementSeparator = ","
     },
     affectDashMode = {
         options = {
@@ -35,15 +38,11 @@ CoriolisController.fieldInformation = {
             "OnlyInAir",
             "Always"
         }
-    },
-    affectDirectionMode = {
-        options = {
-         "Horizontal",
-         "Vertical",
-         "Both"
-        }
     }
 }
 
--- we're ready - give the controller to lönn
+CoriolisController.ignoredFields = {
+    "legacyBehavior"   
+}
+
 return CoriolisController

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using Celeste.Mod.FaerieHelper.Entities;
+using Celeste.Mod.FaerieHelper.ModInterop;
 using MonoMod.ModInterop;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
@@ -24,16 +25,20 @@ public class FaerieHelperModule : EverestModule {
     public FaerieHelperModule() {
         Instance = this;
 #if DEBUG
-        // debug builds use verbose logging
         Logger.SetLogLevel(nameof(FaerieHelperModule), LogLevel.Verbose);
 #else
-        // release builds use info logging to reduce spam in log files
         Logger.SetLogLevel(nameof(FaerieHelperModule), LogLevel.Info);
 #endif
     }
 
-    public override void Load() {
+    public override void Load()
+    {
         typeof(ExtvarInterop).ModInterop();
+        typeof(GravityHelperInterop).ModInterop();
+        typeof(Exports).ModInterop();
+
+        Everest.Events.Player.OnDie += FHDashblockMomentumComponent.removeMomentumDashBlockFlags;
+        Everest.Events.Level.OnTransitionTo += FHDashblockMomentumComponent.removeMomentumDashBlockFlags;
         
         IL.Celeste.Player.NormalUpdate += CoriolisController.modPlayerNormalUpdate;
 
@@ -46,7 +51,11 @@ public class FaerieHelperModule : EverestModule {
         LoadingCoroutineHook = new ILHook(Coroutine, CoriolisController.ModifiedCoroutineHook);
     }
 
-    public override void Unload() {
+    public override void Unload()
+    {
+        Everest.Events.Player.OnDie -= FHDashblockMomentumComponent.removeMomentumDashBlockFlags;
+        Everest.Events.Level.OnTransitionTo -= FHDashblockMomentumComponent.removeMomentumDashBlockFlags;
+        
         IL.Celeste.Player.NormalUpdate -= CoriolisController.modPlayerNormalUpdate;
 
         On.Celeste.DashBlock.OnDashed -= MomentumPreservingDashBlock.On_OnDashed;
